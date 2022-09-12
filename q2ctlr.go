@@ -51,17 +51,24 @@ func (sv *Server) Think() {
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		log.Fatal(response.StatusCode)
+		log.Println(response.StatusCode)
 		return
 	}
 
 	bodybytes, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	files := MVDFilelist{}
 	json.Unmarshal(bodybytes, &files)
+
+	if files.NumFiles > 0 {
+		log.Printf("%d demos to download\n", files.NumFiles)
+	}
+
+	sv.NextThink = time.Now().Unix() + sv.ThinkOffset
 }
 
 func main() {
@@ -125,7 +132,7 @@ func init() {
 	json.Unmarshal(configdata, &svs)
 
 	for i := range svs.Sv {
-		svs.Sv[i].NextThink = time.Now().Unix() + 120 + int64(rand.Intn(120))
+		svs.Sv[i].NextThink = time.Now().Unix() + svs.Sv[i].ThinkOffset + int64(rand.Intn(120))
 		log.Println(svs.Sv[i])
 	}
 }
